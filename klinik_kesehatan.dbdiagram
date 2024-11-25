@@ -1,0 +1,84 @@
+Table profile_klinik {
+    id_klinik int [pk, increment]
+    nama_klinik varchar(100) [not null]
+    alamat varchar(500) [not null]
+    nomor_telepon varchar(15) [not null]
+    email varchar(100) [not null, unique]
+    website varchar(100) [unique]
+}
+
+Table karyawan {
+    id_karyawan int [pk, increment]
+    nama_karyawan varchar(100) [not null]
+    jabatan enum('dokter', 'perawat', 'resepsionis', 'kasir', 'admin') [not null]
+    nomor_telepon varchar(15) [not null]
+    email varchar(100) [not null, unique]
+    status_aktif boolean [not null, default: true]
+}
+
+Table pasien {
+    id_pasien int [pk, increment]
+    nama_pasien varchar(100) [not null]
+    tanggal_lahir date [not null]
+    jenis_kelamin enum('L', 'P') [not null]
+    alamat varchar(500) [not null]
+    nomor_telepon varchar(15) [not null]
+    email varchar(100) [unique]
+    tanggal_daftar datetime [not null, note: "Default to CURRENT_TIMESTAMP in database"]
+}
+
+Table kunjungan {
+    id_kunjungan int [pk, increment]
+    id_pasien int [not null, ref: > pasien.id_pasien]
+    tanggal_kunjungan datetime [not null, note: "Default to CURRENT_TIMESTAMP in database"]
+    pemeriksa int [not null, ref: > karyawan.id_karyawan]
+    keluhan varchar(500) [not null]
+    diagnosa varchar(500) [not null]
+    biaya_periksa int [not null, note: "Check (biaya_periksa > 0)"]
+}
+
+Table resep_obat {
+    id_obat int [pk, increment]
+    nama_obat varchar(200) [not null]
+    satuan varchar(50) [not null]
+    harga int [not null, note: "Check (harga > 0)"]
+    stock int [not null, note: "Check (stock >= 0)"]
+    keterangan varchar(500)
+}
+
+Table detail_resep {
+    id_detail int [pk, increment]
+    id_kunjungan int [not null, ref: > kunjungan.id_kunjungan]
+    id_obat int [not null, ref: > resep_obat.id_obat]
+    jumlah int [not null, note: "Check (jumlah > 0)"]
+    harga_satuan int [not null, note: "Check (harga_satuan > 0)"]
+    subtotal int [note: "Computed as (jumlah * harga_satuan)"]
+}
+
+Table pembayaran {
+    id_pembayaran int [pk, increment]
+    id_kunjungan int [not null, ref: > kunjungan.id_kunjungan, unique]
+    tanggal_pembayaran datetime [not null, note: "Default to CURRENT_TIMESTAMP in database"]
+    biaya_periksa int [not null, note: "Check (biaya_periksa > 0)"]
+    biaya_obat int [not null, note: "Check (biaya_obat >= 0)"]
+    total_pembayaran int [note: "Computed as (biaya_periksa + biaya_obat)"]
+    metode_pembayaran enum('cash', 'debit', 'kredit', 'transfer', 'ewallet') [not null]
+    kasir int [not null, ref: > karyawan.id_karyawan]
+}
+
+Table users {
+    id_user int [pk, increment]
+    username varchar(50) [not null, unique]
+    password varchar(255) [not null]
+    role enum('admin', 'dokter', 'perawat', 'resepsionis', 'kasir') [not null]
+    id_karyawan int [ref: > karyawan.id_karyawan, unique]
+    status_aktif boolean [not null, default: true]
+}
+
+Table jadwal_praktek {
+    id_jadwal int [pk, increment]
+    id_karyawan int [not null, ref: > karyawan.id_karyawan]
+    hari enum('Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu') [not null]
+    jam_mulai time [not null]
+    jam_selesai time [not null]
+}
